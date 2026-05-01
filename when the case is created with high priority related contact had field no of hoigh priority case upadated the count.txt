@@ -1,0 +1,48 @@
+trigger casetrigger on Case (before insert,after insert,before update,after update) {
+    
+    switch on trigger.operationtype
+    {
+        when AFTER_UPDATE
+        {
+			highPriConCount();
+        }
+        when AFTER_INSERT
+        {
+            highPriConCount();
+        }
+        
+    }
+    public static void highPriConCount()
+    {
+        set<id>  contactid=new  set<id>();
+        
+        for(case cs:trigger.new)
+        {
+            if(cs.contactid!=null)
+            {
+                contactid.add(cs.contactid);
+            }
+            
+        }
+        
+        list<contact> contactlist=[select id, Total_No_Of_High_Priority_Cases__c,
+                                   (select id, contactid, priority from cases where priority='high') 
+                                   from contact where id IN :contactid ];
+        
+        list<contact> contactToUpdate=new list<contact>();
+        
+        for(contact contactrecord:contactlist)
+        {
+            contactrecord.Total_No_Of_High_Priority_Cases__c=contactrecord.cases.size();
+            contactToUpdate.add(contactrecord);
+        }
+        if(contactToUpdate!=null)
+        {
+            update contactToUpdate;
+        }
+        
+    }
+}
+
+
+if you want to do rollup summary go with this code.
